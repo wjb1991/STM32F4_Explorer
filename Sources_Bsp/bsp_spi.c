@@ -11,10 +11,10 @@
 //==================================================================================================
 #include "bsp_spi.h"
 
-#define     DEF_UART_CONFIG         SPI_DIRECTION_2LINES,SPI_DATASIZE_8BIT,SPI_POLARITY_LOW,SPI_PHASE_1EDGE,\
-                                    SPI_NSS_HARD_OUTPUT,SPI_BAUDRATEPRESCALER_2,SPI_FIRSTBIT_MSB,SPI_TIMODE_DISABLE\
-                                    SPI_MODE_MASTER\
-#define     DEF_UART_HOOK           0,0,0,0
+#define     DEF_SPI_CONFIG          SPI_DIRECTION_2LINES,SPI_DATASIZE_8BIT,SPI_POLARITY_LOW,SPI_PHASE_1EDGE,\
+                                    SPI_NSS_HARD_OUTPUT,SPI_BAUDRATEPRESCALER_2,SPI_FIRSTBIT_MSB,\
+                                    SPI_MODE_MASTER
+#define     DEF_SPI_HOOK            0,0,0,0
 
 SPI_HandleTypeDef stm32f7xx_spi1 = {SPI1};
 SPI_HandleTypeDef stm32f7xx_spi2 = {SPI2};
@@ -35,7 +35,7 @@ Dev_SPI Dev_SPI1 = {"SPI1",                              //端口名
                     &stm32f7xx_spi1,                     //底层句柄
 };                    
 
-Dev_SPI Dev_SPI1 = {"SPI2",                              //端口名
+Dev_SPI Dev_SPI2 = {"SPI2",                              //端口名
                     DEF_SPI_CONFIG,                      //默认配置
 
                     NULL,                                //发送缓冲区配置
@@ -50,7 +50,7 @@ Dev_SPI Dev_SPI1 = {"SPI2",                              //端口名
                     &stm32f7xx_spi2,                     //底层句柄
 };
 
-Dev_SPI Dev_SPI1 = {"SPI3",                              //端口名
+Dev_SPI Dev_SPI3 = {"SPI3",                              //端口名
                     DEF_SPI_CONFIG,                      //默认配置
 
                     NULL,                                //发送缓冲区配置
@@ -129,11 +129,11 @@ INT8U Bsp_SpiTransByteBlock(Dev_SPI* pst_Dev,INT8U uch_Byte)
 //|----------|----------------------------------------------------------------------
 //| 输入参数 | pst_Dev:设备句柄 uch_Byte: 传输的字节 
 //|----------|----------------------------------------------------------------------
-//| 返回参数 | -1 打开失败, 0 打开成功
+//| 返回参数 | FALSE 传输失败, TRUE:传输成功
 //|----------|----------------------------------------------------------------------
 //| 函数设计 | wjb
 //==================================================================================
-INT8U Bsp_SpiTransBuff(Dev_SPI* pst_Dev,INT8U* uch_TxBuff,INT8U* uch_RxBuff,INT8U uch_Len)
+BOOL Bsp_SpiTransBuff(Dev_SPI* pst_Dev,INT8U* uch_TxBuff,INT8U* uch_RxBuff,INT8U uch_Len)
 {
     SPI_HandleTypeDef* SpiHandle = pst_Dev->pv_SpiHandle;
     
@@ -147,6 +147,7 @@ INT8U Bsp_SpiTransBuff(Dev_SPI* pst_Dev,INT8U* uch_TxBuff,INT8U* uch_RxBuff,INT8
     
     while( ! __HAL_SPI_GET_FLAG(SpiHandle, SPI_FLAG_TXE)){}
     pst_Dev->puch_TxBuff[pst_Dev->uin_TxCount++];
+    return TRUE;
 }
 
 //==================================================================================
@@ -162,9 +163,9 @@ INT8U Bsp_SpiTransBuff(Dev_SPI* pst_Dev,INT8U* uch_TxBuff,INT8U* uch_RxBuff,INT8
 //==================================================================================
 void SPIx_IRQHandler(Dev_SPI* pst_Dev)
 {
-    SPI_HandleTypeDef *hspi = pst_Dev->pv_SpiHandle;
-    INT32U itsource = hspi->Instance->CR2;
-    INT32U itflag   = hspi->Instance->SR;
+    SPI_HandleTypeDef *SpiHandle = pst_Dev->pv_SpiHandle;
+    INT32U itsource = SpiHandle->Instance->CR2;
+    INT32U itflag   = SpiHandle->Instance->SR;
 
     /* SPI in mode Receiver ----------------------------------------------------*/
     if(((itflag & SPI_FLAG_OVR) == RESET) && ((itflag & SPI_FLAG_RXNE) != RESET) && ((itsource & SPI_IT_RXNE) != RESET))
@@ -214,19 +215,19 @@ void SPIx_IRQHandler(Dev_SPI* pst_Dev)
         /* SPI Overrun error interrupt occurred ----------------------------------*/
         if((itflag & SPI_FLAG_OVR) != RESET)
         {
-            __HAL_SPI_CLEAR_OVRFLAG(hspi);
+            __HAL_SPI_CLEAR_OVRFLAG(SpiHandle);
         }
 
         /* SPI Mode Fault error interrupt occurred -------------------------------*/
         if((itflag & SPI_FLAG_MODF) != RESET)
         {
-            __HAL_SPI_CLEAR_MODFFLAG(hspi);
+            __HAL_SPI_CLEAR_MODFFLAG(SpiHandle);
         }
 
         /* SPI Frame error interrupt occurred ------------------------------------*/
         if((itflag & SPI_FLAG_FRE) != RESET)
         {
-            __HAL_SPI_CLEAR_FREFLAG(hspi);
+            __HAL_SPI_CLEAR_FREFLAG(SpiHandle);
         }
         
         if(pst_Dev->cb_ErrHandle != NULL)
