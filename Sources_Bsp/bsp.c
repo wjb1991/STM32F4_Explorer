@@ -63,6 +63,7 @@ void  Bsp_Init (void)
     Bsp_UartOpen(&COM4);*/
     
     Bsp_At24c512Init();
+    Bsp_W25QxxInit(&st_W25Q128);
 
 }
 void Bsp_DelayUS(uint32_t us)

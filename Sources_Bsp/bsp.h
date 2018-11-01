@@ -31,8 +31,11 @@ extern  "C" {                                  /* See Note #1.                  
 #include  "bsp_led.h"
 #include  "bsp_clock.h"
 #include  "bsp_usart.h"
+#include  "bsp_spi.h"
 #include  "bsp_i2c.h"
 #include  "bsp_at24c512.h"
+  
+#include  "Bsp_W25Qxx.h"
 
 #ifdef      OS_SUPPROT
 #include  "bsp_os.h"

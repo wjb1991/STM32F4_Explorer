@@ -1,5 +1,5 @@
 //==================================================================================================
-//| 文件名称 | Bsp_Spi.h
+//| 文件名称 | Bsp_Spi.c
 //|--------- |--------------------------------------------------------------------------------------
 //| 文件描述 | Bsp_Spi.c 板级SPI驱动 STM32版本
 //|--------- |--------------------------------------------------------------------------------------
@@ -11,8 +11,13 @@
 //==================================================================================================
 #include "bsp_spi.h"
 
-#define     DEF_SPI_CONFIG          SPI_DIRECTION_2LINES,SPI_DATASIZE_8BIT,SPI_POLARITY_LOW,SPI_PHASE_1EDGE,\
-                                    SPI_NSS_HARD_OUTPUT,SPI_BAUDRATEPRESCALER_2,SPI_FIRSTBIT_MSB,\
+#define     DEF_SPI_CONFIG          SPI_DIRECTION_2LINES,\
+                                    SPI_DATASIZE_8BIT,\
+                                    SPI_POLARITY_LOW,\
+                                    SPI_PHASE_1EDGE,\
+                                    SPI_NSS_SOFT,\
+                                    SPI_BAUDRATEPRESCALER_4,\
+                                    SPI_FIRSTBIT_MSB,\
                                     SPI_MODE_MASTER
 #define     DEF_SPI_HOOK            0,0,0,0
 
@@ -20,7 +25,7 @@ SPI_HandleTypeDef stm32f7xx_spi1 = {SPI1};
 SPI_HandleTypeDef stm32f7xx_spi2 = {SPI2};
 SPI_HandleTypeDef stm32f7xx_spi3 = {SPI3};
 
-Dev_SPI Dev_SPI1 = {"SPI1",                              //端口名
+Dev_SPI st_SPI1 = {"SPI1",                              //端口名
                     DEF_SPI_CONFIG,                      //默认配置
 
                     NULL,                                //发送缓冲区配置
@@ -35,7 +40,7 @@ Dev_SPI Dev_SPI1 = {"SPI1",                              //端口名
                     &stm32f7xx_spi1,                     //底层句柄
 };                    
 
-Dev_SPI Dev_SPI2 = {"SPI2",                              //端口名
+Dev_SPI st_SPI2 = {"SPI2",                              //端口名
                     DEF_SPI_CONFIG,                      //默认配置
 
                     NULL,                                //发送缓冲区配置
@@ -50,7 +55,7 @@ Dev_SPI Dev_SPI2 = {"SPI2",                              //端口名
                     &stm32f7xx_spi2,                     //底层句柄
 };
 
-Dev_SPI Dev_SPI3 = {"SPI3",                              //端口名
+Dev_SPI st_SPI3 = {"SPI3",                              //端口名
                     DEF_SPI_CONFIG,                      //默认配置
 
                     NULL,                                //发送缓冲区配置
@@ -95,6 +100,8 @@ BOOL Bsp_SpiInit(Dev_SPI* pst_Dev)
     {
         //_Error_Handler(__FILE__, __LINE__);
     }
+    
+    __HAL_SPI_ENABLE(SpiHandle);
 
     return TRUE;
 }
@@ -118,6 +125,7 @@ INT8U Bsp_SpiTransByteBlock(Dev_SPI* pst_Dev,INT8U uch_Byte)
     while( ! __HAL_SPI_GET_FLAG(SpiHandle, SPI_FLAG_TXE)){}
     SpiHandle->Instance->DR = uch_Byte;
     while( ! __HAL_SPI_GET_FLAG(SpiHandle, SPI_FLAG_RXNE)){}
+    while( ! __HAL_SPI_GET_FLAG(SpiHandle, SPI_FLAG_TXE)){}
     RecvByte= SpiHandle->Instance->DR;
     return RecvByte;
 }
@@ -239,6 +247,7 @@ void SPIx_IRQHandler(Dev_SPI* pst_Dev)
 
 void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
 {
+
     GPIO_InitTypeDef GPIO_InitStruct;
     if(spiHandle->Instance==SPI1)
     {
@@ -249,21 +258,17 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
         __HAL_RCC_SPI1_CLK_ENABLE();
 
         /**SPI1 GPIO Configuration    
-        PA4     ------> SPI1_NSS
-        PA5     ------> SPI1_SCK
-        PA6     ------> SPI1_MISO
-        PA7     ------> SPI1_MOSI 
+        PB3     ------> SPI1_SCK
+        PB4     ------> SPI1_MISO
+        PB5     ------> SPI1_MOSI 
         */
-        GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+        GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
         GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-        /* SPI1 interrupt Init */
-        HAL_NVIC_SetPriority(SPI1_IRQn, 0, 0);
-        HAL_NVIC_EnableIRQ(SPI1_IRQn);
         /* USER CODE BEGIN SPI1_MspInit 1 */
 
         /* USER CODE END SPI1_MspInit 1 */
@@ -272,28 +277,25 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
 
 void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 {
+
     if(spiHandle->Instance==SPI1)
     {
-        /* USER CODE BEGIN SPI1_MspDeInit 0 */
+    /* USER CODE BEGIN SPI1_MspDeInit 0 */
 
-        /* USER CODE END SPI1_MspDeInit 0 */
-        /* Peripheral clock disable */
-        __HAL_RCC_SPI1_CLK_DISABLE();
+    /* USER CODE END SPI1_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_SPI1_CLK_DISABLE();
 
-        /**SPI1 GPIO Configuration    
-        PA4     ------> SPI1_NSS
-        PA5     ------> SPI1_SCK
-        PA6     ------> SPI1_MISO
-        PA7     ------> SPI1_MOSI 
-        */
-        HAL_GPIO_DeInit(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7);
+    /**SPI1 GPIO Configuration    
+    PB3     ------> SPI1_SCK
+    PB4     ------> SPI1_MISO
+    PB5     ------> SPI1_MOSI 
+    */
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5);
 
-        /* SPI1 interrupt Deinit */
-        HAL_NVIC_DisableIRQ(SPI1_IRQn);
-        /* USER CODE BEGIN SPI1_MspDeInit 1 */
+    /* USER CODE BEGIN SPI1_MspDeInit 1 */
 
-        /* USER CODE END SPI1_MspDeInit 1 */
+    /* USER CODE END SPI1_MspDeInit 1 */
     }
-}
-
+} 
 

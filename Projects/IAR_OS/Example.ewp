@@ -2138,6 +2138,9 @@
             <name>$PROJ_DIR$\..\..\Sources_Bsp\bsp_usart.c</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\..\..\Sources_Bsp\bsp_w25qxx.c</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\..\Sources_Bsp\cpu_bsp.c</name>
         </file>
         <file>
