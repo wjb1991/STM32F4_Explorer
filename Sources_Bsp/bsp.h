@@ -59,7 +59,7 @@ void Bsp_DelayMs(INT32U ms);
 
 #define	Bsp_Printf		Bsp_UartPrintf
 
-#define	TRACE_DBG 	    //Bsp_UartPrintf
+//#define	TRACE_DBG 	    //Bsp_UartPrintf
 
 #ifdef __cplusplus
 }                                              /* End of 'extern'al C lang linkage.                    */

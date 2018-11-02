@@ -349,13 +349,10 @@ void SPIxRxDMA_IRQHandle(Dev_SPI* pst_Dev)
 
 }
 
-
-
 void DMA2_Stream0_IRQHandler(void)
 {
     SPIxRxDMA_IRQHandle(&st_SPI1);
 }
-
 
 void DMA2_Stream3_IRQHandler(void)
 {

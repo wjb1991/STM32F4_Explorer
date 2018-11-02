@@ -24,7 +24,7 @@ UART_HandleTypeDef stm32f7xx_usart3 = {USART3};
 UART_HandleTypeDef stm32f7xx_uart4 = {UART4};
 
 static INT8U    auch_RxBuff[4][DEF_UART_BUFF_SIZE] = {0};
-static INT8U    auch_PrintfBuff[100] = {0};
+
 /**/
 Dev_SerialPort COM1 = {"COM1",                              //端口名
                         DEF_UART_CONFIG,                    //默认配置
@@ -710,8 +710,10 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 //==================================================================================
 void Bsp_UartPrintf(const char * Format,...)
 {
+    static INT8U    auch_PrintfBuff[100] = {0};
 	Dev_SerialPort* p = &COM1;      //打印串口更改此处
-	while(p->uin_TxLen != 0){}
+	while(p->uin_TxLen != 0){}      //等待发送完成 
+    
 	va_list pArgs;
 	va_start(pArgs,Format);
 	vsprintf((char *)auch_PrintfBuff,Format,pArgs);

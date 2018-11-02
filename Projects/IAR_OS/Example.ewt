@@ -2423,6 +2423,9 @@
             <name>$PROJ_DIR$\..\..\Sources_Bsp\bsp_led.c</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\..\..\Sources_Bsp\bsp_ltc1867.c</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\..\Sources_Bsp\bsp_os.c</name>
         </file>
         <file>
@@ -2520,6 +2523,9 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\..\Sources_Task\task_gasproc.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\Sources_Task\Task_GreyProc.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\..\Sources_Task\task_start.c</name>

@@ -1,28 +1,30 @@
 //==================================================================================================
-//| 文件名称 | Bsp_Dma.c
+//| 文件名称 | Task_GreyProc.c
 //|--------- |--------------------------------------------------------------------------------------
-//| 文件描述 | Bsp_Dma.c 板级DMA驱动 STM32版本
+//| 文件描述 | 灰度处理
 //|--------- |--------------------------------------------------------------------------------------
 //| 版权声明 | 
 //|----------|--------------------------------------------------------------------------------------
 //|  版本    |  时间       |  作者     | 描述
 //|--------- |-------------|-----------|------------------------------------------------------------
-//|  V1.0    | 2018.11.1   |  wjb      | 初版
+//|  V1.0    | 2018.11.02  |  wjb      | 初版 先验证是否能用DMA连续读取LT1867
 //==================================================================================================
-#include "Bsp_Dma.h"
+#include "app_cfg.h"
 
-void Bsp_DMAInit(void) 
+void Task_GreyProc (void  *p_arg)
 {
-    /* DMA controller clock enable */
-    __HAL_RCC_DMA2_CLK_ENABLE();
-
-    /* DMA interrupt init */
-    /* DMA2_Stream0_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-    /* DMA2_Stream3_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+    OS_ERR  os_err;
+    
+    while(TRUE)
+    {
+        /* 每0.1s采集处理一次 灰度信息 */
+        OSTimeDlyHMSM(0u, 0u, 0u, 100,
+                      OS_OPT_TIME_HMSM_STRICT | OS_OPT_TIME_PERIODIC,/* 周期模式 */
+                      &os_err);
+        
+        
+        TRACE_DBG(">>DBG:       灰度处理\r\n");
+        
+        BSP_Led2Toggle();
+    }
 }
-
-

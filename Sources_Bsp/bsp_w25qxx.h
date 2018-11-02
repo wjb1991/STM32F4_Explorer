@@ -16,7 +16,7 @@
 
 typedef struct _W25QXX {
     INT16U  uin_ID;
-    void * pv_DevSpiHandle;     //µ×²ãSPI¾ä±ú
+    void* pv_DevSpiHandle;     //µ×²ãSPI¾ä±ú
     void (*CS)(BOOL);           //CS²Ù×÷»Øµ÷º¯Êý
 }Dev_W25QXX;
 

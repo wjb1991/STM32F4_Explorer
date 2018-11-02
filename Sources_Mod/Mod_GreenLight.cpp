@@ -1,28 +1,25 @@
 //==================================================================================================
-//| 文件名称 | Bsp_Dma.c
+//| 文件名称 | Mod_GreenLight.cpp
 //|--------- |--------------------------------------------------------------------------------------
-//| 文件描述 | Bsp_Dma.c 板级DMA驱动 STM32版本
+//| 文件描述 | 绿光处理
 //|--------- |--------------------------------------------------------------------------------------
 //| 版权声明 | 
 //|----------|--------------------------------------------------------------------------------------
 //|  版本    |  时间       |  作者     | 描述
 //|--------- |-------------|-----------|------------------------------------------------------------
-//|  V1.0    | 2018.11.1   |  wjb      | 初版
+//|  V1.0    | 2018.11.02  |  wjb      | 初版 先验证是否能用DMA连续读取LT1867
 //==================================================================================================
-#include "Bsp_Dma.h"
 
-void Bsp_DMAInit(void) 
-{
-    /* DMA controller clock enable */
-    __HAL_RCC_DMA2_CLK_ENABLE();
+typedef struct __GreenCalibPoint {
+    FP32 f_Volt;
+    FP32 f_Grey;
+}GreenCalibPoint;
 
-    /* DMA interrupt init */
-    /* DMA2_Stream0_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-    /* DMA2_Stream3_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-}
+typedef struct __GreenLight {
+    /* 单路数据的 */
+    FP32 f_Volt;
+    FP32 f_Grey;
+    GreenCalibPoint CalibPoint[10];     /* 标定点 */
+}GreenLight;
 
-
+GreenLight st_Green[10];
