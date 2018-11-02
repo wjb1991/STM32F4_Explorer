@@ -50,6 +50,8 @@ struct _DEV_SPI{
     
     /*  µ×²ã¾ä±ú      */
     void * pv_SpiHandle; //¾ä±ú
+    void * pv_DmaTxHandle;
+    void * pv_DmaRxHandle;
 };
 
 

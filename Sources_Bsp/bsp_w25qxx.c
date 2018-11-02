@@ -62,14 +62,22 @@ INT16U Bsp_W25QxxReadID(void* pv_Dev)
 {
     Dev_W25QXX* pst_Dev = pv_Dev;
 	INT16U Temp = 0;	  
-
-    pst_Dev->CS(0);				    
+    static INT8U TxBuff[6] = {0x90,0x00,0x00,0x00,0xFF,0xFF};
+    static INT8U RxBuff[6] = {0};
+    pst_Dev->CS(0);	
+#if 0
 	Bsp_SpiTransByteBlock(&st_SPI1,0x90);//∑¢ÀÕ∂¡»°ID√¸¡Ó	    
 	Bsp_SpiTransByteBlock(&st_SPI1,0x00);
 	Bsp_SpiTransByteBlock(&st_SPI1,0x00);    
 	Bsp_SpiTransByteBlock(&st_SPI1,0x00);			   
 	Temp |= Bsp_SpiTransByteBlock(&st_SPI1,0xFF)<<8;  
-	Temp |= Bsp_SpiTransByteBlock(&st_SPI1,0xFF); 
+	Temp |= Bsp_SpiTransByteBlock(&st_SPI1,0xFF);
+#else  
+    
+    Bsp_SpiTransDMA(&st_SPI1,TxBuff,RxBuff,6);
+#endif    
+    while(Bsp_SpiIsBusy(&st_SPI1) == TRUE){}
+    
     pst_Dev->CS(1);
     
     pst_Dev->uin_ID = Temp;

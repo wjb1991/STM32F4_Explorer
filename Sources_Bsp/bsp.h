@@ -28,6 +28,7 @@ extern  "C" {                                  /* See Note #1.                  
   
 #include  "bsp_datatype.h"
 #include  "bsp_converter.h"
+#include  "bsp_sram.h"
 #include  "bsp_led.h"
 #include  "bsp_clock.h"
 #include  "bsp_usart.h"

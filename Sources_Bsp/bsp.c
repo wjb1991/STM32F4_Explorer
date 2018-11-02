@@ -24,6 +24,7 @@ void  Bsp_Init (void)
     
     BSP_LedInit(); 
     
+    Bsp_DMAInit();
     Bsp_SramInit();
     
     /* µ÷ÊÔ´®¿Ú */

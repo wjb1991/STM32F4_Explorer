@@ -25,6 +25,13 @@ SPI_HandleTypeDef stm32f7xx_spi1 = {SPI1};
 SPI_HandleTypeDef stm32f7xx_spi2 = {SPI2};
 SPI_HandleTypeDef stm32f7xx_spi3 = {SPI3};
 
+DMA_HandleTypeDef hdma_spi1_tx;
+DMA_HandleTypeDef hdma_spi1_rx;
+DMA_HandleTypeDef hdma_spi2_tx;
+DMA_HandleTypeDef hdma_spi2_rx;
+DMA_HandleTypeDef hdma_spi3_tx;
+DMA_HandleTypeDef hdma_spi3_rx;
+
 Dev_SPI st_SPI1 = {"SPI1",                              //端口名
                     DEF_SPI_CONFIG,                      //默认配置
 
@@ -38,6 +45,8 @@ Dev_SPI st_SPI1 = {"SPI1",                              //端口名
 
                     DEF_SPI_HOOK,                        //回调函数
                     &stm32f7xx_spi1,                     //底层句柄
+                    &hdma_spi1_tx,
+                    &hdma_spi1_rx,
 };                    
 
 Dev_SPI st_SPI2 = {"SPI2",                              //端口名
@@ -53,6 +62,8 @@ Dev_SPI st_SPI2 = {"SPI2",                              //端口名
 
                     DEF_SPI_HOOK,                        //回调函数
                     &stm32f7xx_spi2,                     //底层句柄
+                    NULL,
+                    NULL,
 };
 
 Dev_SPI st_SPI3 = {"SPI3",                              //端口名
@@ -68,6 +79,8 @@ Dev_SPI st_SPI3 = {"SPI3",                              //端口名
 
                     DEF_SPI_HOOK,                        //回调函数
                     &stm32f7xx_spi3,                     //底层句柄
+                    NULL,
+                    NULL,
 };
 
 //==================================================================================
@@ -106,6 +119,14 @@ BOOL Bsp_SpiInit(Dev_SPI* pst_Dev)
     return TRUE;
 }
 
+BOOL Bsp_SpiIsBusy(Dev_SPI* pst_Dev)
+{
+    if(pst_Dev->uin_RxLen != 0 || pst_Dev->uin_TxLen != 0)
+        return TRUE;
+    else
+        return FALSE;
+}
+
 //==================================================================================
 //| 函数名称 | Bsp_SpiTransByte
 //|----------|----------------------------------------------------------------------
@@ -131,7 +152,7 @@ INT8U Bsp_SpiTransByteBlock(Dev_SPI* pst_Dev,INT8U uch_Byte)
 }
 
 //==================================================================================
-//| 函数名称 | Bsp_SpiTransByte
+//| 函数名称 | Bsp_SpiTrans
 //|----------|----------------------------------------------------------------------
 //| 函数功能 | 双相四线制 Spi收发n个字节
 //|----------|----------------------------------------------------------------------
@@ -141,7 +162,7 @@ INT8U Bsp_SpiTransByteBlock(Dev_SPI* pst_Dev,INT8U uch_Byte)
 //|----------|----------------------------------------------------------------------
 //| 函数设计 | wjb
 //==================================================================================
-BOOL Bsp_SpiTransBuff(Dev_SPI* pst_Dev,INT8U* uch_TxBuff,INT8U* uch_RxBuff,INT8U uch_Len)
+BOOL Bsp_SpiTrans(Dev_SPI* pst_Dev,INT8U* uch_TxBuff,INT8U* uch_RxBuff,INT8U uch_Len)
 {
     SPI_HandleTypeDef* SpiHandle = pst_Dev->pv_SpiHandle;
     
@@ -155,6 +176,44 @@ BOOL Bsp_SpiTransBuff(Dev_SPI* pst_Dev,INT8U* uch_TxBuff,INT8U* uch_RxBuff,INT8U
     
     while( ! __HAL_SPI_GET_FLAG(SpiHandle, SPI_FLAG_TXE)){}
     pst_Dev->puch_TxBuff[pst_Dev->uin_TxCount++];
+    return TRUE;
+}
+
+BOOL Bsp_SpiTransDMA(Dev_SPI* pst_Dev,INT8U* uch_TxBuff,INT8U* uch_RxBuff,INT8U uch_Len)
+{
+    SPI_HandleTypeDef* SpiHandle = pst_Dev->pv_SpiHandle;
+    
+    pst_Dev->puch_TxBuff = uch_TxBuff;
+    pst_Dev->uin_TxLen = uch_Len;
+    pst_Dev->uin_TxCount = 0;
+    
+    pst_Dev->puch_RxBuff = uch_TxBuff;
+    pst_Dev->uin_RxLen = uch_Len;
+    pst_Dev->uin_RxCount = 0;
+    
+    while( ! __HAL_SPI_GET_FLAG(SpiHandle, SPI_FLAG_TXE)){}
+  
+    /* 开启接收DMA传输流 */
+    HAL_DMA_Start_IT(pst_Dev->pv_DmaRxHandle,                  //DMA句柄
+                    (INT32U)&SpiHandle->Instance->DR,          //源地址
+                    (INT32U)pst_Dev->puch_RxBuff,              //目标地址
+                     pst_Dev->uin_RxLen);                      //长度
+
+    /* 开启接收DMA请求 */
+    SET_BIT(SpiHandle->Instance->CR2, SPI_CR2_RXDMAEN);
+
+    /* 开启发送DMA传输流 */
+    HAL_DMA_Start_IT(pst_Dev->pv_DmaTxHandle,                  //DMA句柄
+                    (INT32U)pst_Dev->puch_TxBuff,              //源地址
+                    (INT32U)&SpiHandle->Instance->DR,          //目标地址
+                     pst_Dev->uin_TxLen);                      //长度
+
+    /* 开启SPI错误标记 */
+    SET_BIT(SpiHandle->Instance->CR2, SPI_CR2_ERRIE);
+
+    /* 开启发送DMA请求 */
+    SET_BIT(SpiHandle->Instance->CR2, SPI_CR2_TXDMAEN);
+    
     return TRUE;
 }
 
@@ -188,10 +247,10 @@ void SPIx_IRQHandler(Dev_SPI* pst_Dev)
             //接受完成
             pst_Dev->uin_RxCount = 0;
             pst_Dev->uin_RxLen = 0;
-            if(pst_Dev->cb_SendComplete != NULL)
+            if(pst_Dev->cb_RecvReady != NULL)
             {
-                pst_Dev->cb_SendComplete(pst_Dev);
-            }        
+                pst_Dev->cb_RecvReady(pst_Dev,pst_Dev->puch_RxBuff,pst_Dev->uin_RxLen);
+            }         
         }
         return;
     }
@@ -245,9 +304,66 @@ void SPIx_IRQHandler(Dev_SPI* pst_Dev)
     }
 }
 
+//==================================================================================
+//| 函数名称 | SPIxTxDMA_IRQHandle
+//|----------|----------------------------------------------------------------------
+//| 函数功能 | SPIx DMA发送完成中断 
+//|----------|----------------------------------------------------------------------
+//| 输入参数 | pst_Dev:设备句柄 
+//|----------|----------------------------------------------------------------------
+//| 返回参数 | -1 打开失败, 0 打开成功
+//|----------|----------------------------------------------------------------------
+//| 函数设计 | wjb
+//==================================================================================
+void SPIxTxDMA_IRQHandle(Dev_SPI* pst_Dev)
+{
+    HAL_DMA_IRQHandler(pst_Dev->pv_DmaTxHandle);
+    pst_Dev->uin_TxCount = 0;
+    pst_Dev->uin_TxLen = 0;
+    if(pst_Dev->cb_SendComplete != NULL)
+    {
+        pst_Dev->cb_SendComplete(pst_Dev);
+    }
+}
+
+//==================================================================================
+//| 函数名称 | SPIxRxDMA_IRQHandle
+//|----------|----------------------------------------------------------------------
+//| 函数功能 | SPIx DMA发送完成中断 
+//|----------|----------------------------------------------------------------------
+//| 输入参数 | pst_Dev:设备句柄 
+//|----------|----------------------------------------------------------------------
+//| 返回参数 | -1 打开失败, 0 打开成功
+//|----------|----------------------------------------------------------------------
+//| 函数设计 | wjb
+//==================================================================================
+void SPIxRxDMA_IRQHandle(Dev_SPI* pst_Dev)
+{
+    HAL_DMA_IRQHandler(pst_Dev->pv_DmaRxHandle);
+    pst_Dev->uin_RxCount = 0;
+    pst_Dev->uin_RxLen = 0;
+    if(pst_Dev->cb_RecvReady != NULL)
+    {
+        pst_Dev->cb_RecvReady(pst_Dev,pst_Dev->puch_RxBuff,pst_Dev->uin_RxLen);
+    }  
+
+}
+
+
+
+void DMA2_Stream0_IRQHandler(void)
+{
+    SPIxRxDMA_IRQHandle(&st_SPI1);
+}
+
+
+void DMA2_Stream3_IRQHandler(void)
+{
+    SPIxTxDMA_IRQHandle(&st_SPI1);
+}
+
 void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
 {
-
     GPIO_InitTypeDef GPIO_InitStruct;
     if(spiHandle->Instance==SPI1)
     {
@@ -269,33 +385,58 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
         GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-        /* USER CODE BEGIN SPI1_MspInit 1 */
+        /* SPI1 DMA Init */
+        /* SPI1_RX Init */
+        hdma_spi1_rx.Instance = DMA2_Stream0;
+        hdma_spi1_rx.Init.Channel = DMA_CHANNEL_3;
+        hdma_spi1_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+        hdma_spi1_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+        hdma_spi1_rx.Init.MemInc = DMA_MINC_ENABLE;
+        hdma_spi1_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+        hdma_spi1_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+        hdma_spi1_rx.Init.Mode = DMA_NORMAL;
+        hdma_spi1_rx.Init.Priority = DMA_PRIORITY_LOW;
+        hdma_spi1_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+        if (HAL_DMA_Init(&hdma_spi1_rx) != HAL_OK)
+        {
+            //_Error_Handler(__FILE__, __LINE__);
+        }
+        /* SPI1_TX Init */
+        hdma_spi1_tx.Instance = DMA2_Stream3;
+        hdma_spi1_tx.Init.Channel = DMA_CHANNEL_3;
+        hdma_spi1_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+        hdma_spi1_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+        hdma_spi1_tx.Init.MemInc = DMA_MINC_ENABLE;
+        hdma_spi1_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+        hdma_spi1_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+        hdma_spi1_tx.Init.Mode = DMA_NORMAL;
+        hdma_spi1_tx.Init.Priority = DMA_PRIORITY_LOW;
+        hdma_spi1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
 
-        /* USER CODE END SPI1_MspInit 1 */
+        if (HAL_DMA_Init(&hdma_spi1_tx) != HAL_OK)
+        {
+            //_Error_Handler(__FILE__, __LINE__);
+        }
     }
 }
 
 void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 {
-
     if(spiHandle->Instance==SPI1)
     {
-    /* USER CODE BEGIN SPI1_MspDeInit 0 */
+        /* Peripheral clock disable */
+        __HAL_RCC_SPI1_CLK_DISABLE();
 
-    /* USER CODE END SPI1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_SPI1_CLK_DISABLE();
+        /**SPI1 GPIO Configuration    
+        PB3     ------> SPI1_SCK
+        PB4     ------> SPI1_MISO
+        PB5     ------> SPI1_MOSI 
+        */
+        HAL_GPIO_DeInit(GPIOB, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5);
 
-    /**SPI1 GPIO Configuration    
-    PB3     ------> SPI1_SCK
-    PB4     ------> SPI1_MISO
-    PB5     ------> SPI1_MOSI 
-    */
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5);
-
-    /* USER CODE BEGIN SPI1_MspDeInit 1 */
-
-    /* USER CODE END SPI1_MspDeInit 1 */
+        /* SPI1 DMA DeInit */
+        HAL_DMA_DeInit(&hdma_spi1_rx);
+        HAL_DMA_DeInit(&hdma_spi1_tx);
     }
 } 
 

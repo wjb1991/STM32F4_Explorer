@@ -2414,6 +2414,9 @@
             <name>$PROJ_DIR$\..\..\Sources_Bsp\bsp_converter.c</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\..\..\Sources_Bsp\bsp_dma.c</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\..\Sources_Bsp\bsp_i2c.c</name>
         </file>
         <file>
@@ -2443,9 +2446,6 @@
         <file>
             <name>$PROJ_DIR$\..\..\Sources_Bsp\stm32f4xx_it.c</name>
         </file>
-        <file>
-            <name>$PROJ_DIR$\..\..\Drivers\STM32F4xx_HAL_Driver\Inc\stm32f4xx_ll_spi.h</name>
-        </file>
     </group>
     <group>
         <name>Sources_Drive</name>
@@ -2454,6 +2454,9 @@
         </file>
         <file>
             <name>$PROJ_DIR$\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_cortex.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_dma.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\..\Drivers\STM32F4xx_HAL_Driver\Src\stm32f4xx_hal_gpio.c</name>
