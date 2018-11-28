@@ -109,7 +109,7 @@ void AppTaskCreate (void)
     OS_ERR  os_err;
     
     /* 按优先级从低倒高开始创建 */
-    
+#if 0    
     /* 命令行调试 */
     OSTaskCreate((OS_TCB       *)&TaskCmlSendTCB,                               /* 创建任务控制块 */
                  (CPU_CHAR     *)"Debug Task",                                  /* 任务名称 */
@@ -140,7 +140,7 @@ void AppTaskCreate (void)
                  (OS_OPT        )(OS_OPT_TASK_STK_CHK | OS_OPT_TASK_STK_CLR | OS_OPT_TASK_SAVE_FP),
                  (OS_ERR       *)&os_err);                                      /* 存放错误值 */
     
-
+#endif
     /* 紫外处理光谱仪 */
     OSTaskCreate((OS_TCB       *)&TaskGasProcTCB,                               /* 创建任务控制块 */
                  (CPU_CHAR     *)"Gas Process",                                 /* 任务名称 */

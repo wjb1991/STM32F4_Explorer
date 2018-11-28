@@ -60,7 +60,7 @@ uint8_t Deal_SlavePack(StdBus_t* pst_Fram)
                 
                 TRACE_DBG(">>DBG>>      设置光谱仪积分时间\n\r");
                 
-                Bsp_Uint8ToUint32(&pst_Fram->puc_PayLoad[0], &i,eLeToLe);
+                //Bsp_Uint8ToUint32(&pst_Fram->puc_PayLoad[0], &i,eLeToLe);
                 
                 if( i > 65000000)
                     i = 65000000;
@@ -77,7 +77,7 @@ uint8_t Deal_SlavePack(StdBus_t* pst_Fram)
             //读命令是返回是否在调零
             pst_Fram->uin_PayLoadLenth = 4;
             
-            Bsp_Uint32ToUint8(&USB4000.ul_IntegralTime,pst_Fram->puc_PayLoad,eLeToLe);
+            //Bsp_Uint32ToUint8(&USB4000.ul_IntegralTime,pst_Fram->puc_PayLoad,eLeToLe);
             res = 1;    //应答
         }
         break;
@@ -193,7 +193,7 @@ uint8_t Deal_SlavePack(StdBus_t* pst_Fram)
                 {
                     TRACE_DBG(">>DBG>>      接收到标定命令\n\r");
                     
-                    Bsp_INT8UToFP32(&pst_Fram->puc_PayLoad[1], &f);
+                    //Bsp_INT8UToFP32(&pst_Fram->puc_PayLoad[1], &f);
                     GasAnalysis.f_RefConcentration = f;            //给定浓度
                     Mod_GasAnalysisGoCalibration(&GasAnalysis);
                     res = 1;    //应答                
@@ -223,7 +223,7 @@ uint8_t Deal_SlavePack(StdBus_t* pst_Fram)
                 INT8U i = pst_Fram->puc_PayLoad[0];
                 INT8U uch_ParamType = pst_Fram->puc_PayLoad[1];
                 FP32  f_Param = 0;
-                Bsp_INT8UToFP32(&pst_Fram->puc_PayLoad[2], &f_Param);
+                //Bsp_INT8UToFP32(&pst_Fram->puc_PayLoad[2], &f_Param);
                 
                 if(i < DEF_MAX_POINT_NUM)
                 {
@@ -277,10 +277,10 @@ uint8_t Deal_SlavePack(StdBus_t* pst_Fram)
                 if(i < DEF_MAX_POINT_NUM)
                 {
                     pst_Fram->puc_PayLoad[1] = p[i].b_Use;
-                    Bsp_FP32ToINT8U(p[i].f_Concentration, &pst_Fram->puc_PayLoad[2]);
-                    Bsp_FP32ToINT8U(p[i].f_Hi204_4,  &pst_Fram->puc_PayLoad[6]);     
-                    Bsp_FP32ToINT8U(p[i].f_Hi214_8,  &pst_Fram->puc_PayLoad[10]);
-                    Bsp_FP32ToINT8U(p[i].f_Hi226_0,  &pst_Fram->puc_PayLoad[14]);
+                    //Bsp_FP32ToINT8U(p[i].f_Concentration, &pst_Fram->puc_PayLoad[2]);
+                   // Bsp_FP32ToINT8U(p[i].f_Hi204_4,  &pst_Fram->puc_PayLoad[6]);     
+                    //Bsp_FP32ToINT8U(p[i].f_Hi214_8,  &pst_Fram->puc_PayLoad[10]);
+                    //Bsp_FP32ToINT8U(p[i].f_Hi226_0,  &pst_Fram->puc_PayLoad[14]);
 
                     pst_Fram->uin_PayLoadLenth = 18;                
                 }
@@ -371,7 +371,7 @@ uint8_t Deal_SlavePack(StdBus_t* pst_Fram)
                     break;
                 }
                 //前两个索引不修改直接返回
-                Bsp_FP32ToINT8U(p[i],  &pst_Fram->puc_PayLoad[2]);
+                //Bsp_FP32ToINT8U(p[i],  &pst_Fram->puc_PayLoad[2]);
                 pst_Fram->uin_PayLoadLenth = 6;
                 res = 1;    //应答
             }
@@ -531,9 +531,9 @@ uint8_t Deal_SlavePack(StdBus_t* pst_Fram)
             {
                 //返回三个吸收峰的高度
                 pst_Fram->puc_PayLoad[0] = 3;
-                Bsp_FP32ToINT8U(GasAnalysis.f_Hi204_4,  &pst_Fram->puc_PayLoad[1]);     
-                Bsp_FP32ToINT8U(GasAnalysis.f_Hi214_8,  &pst_Fram->puc_PayLoad[5]);
-                Bsp_FP32ToINT8U(GasAnalysis.f_Hi226_0,  &pst_Fram->puc_PayLoad[9]);
+                //Bsp_FP32ToINT8U(GasAnalysis.f_Hi204_4,  &pst_Fram->puc_PayLoad[1]);     
+                //Bsp_FP32ToINT8U(GasAnalysis.f_Hi214_8,  &pst_Fram->puc_PayLoad[5]);
+                //Bsp_FP32ToINT8U(GasAnalysis.f_Hi226_0,  &pst_Fram->puc_PayLoad[9]);
                 pst_Fram->uin_PayLoadLenth = 13;
                 res = 1;    //应答
             }
@@ -554,9 +554,9 @@ uint8_t Deal_SlavePack(StdBus_t* pst_Fram)
             {
                 //返回三个吸收峰的高度
                 pst_Fram->puc_PayLoad[0] = 3;
-                Bsp_FP32ToINT8U(GasAnalysis.f_Concentration_204,  &pst_Fram->puc_PayLoad[1]);     
-                Bsp_FP32ToINT8U(GasAnalysis.f_Concentration_214,  &pst_Fram->puc_PayLoad[5]);
-                Bsp_FP32ToINT8U(GasAnalysis.f_Concentration_226,  &pst_Fram->puc_PayLoad[9]);
+                //Bsp_FP32ToINT8U(GasAnalysis.f_Concentration_204,  &pst_Fram->puc_PayLoad[1]);     
+                //Bsp_FP32ToINT8U(GasAnalysis.f_Concentration_214,  &pst_Fram->puc_PayLoad[5]);
+                //Bsp_FP32ToINT8U(GasAnalysis.f_Concentration_226,  &pst_Fram->puc_PayLoad[9]);
                 pst_Fram->uin_PayLoadLenth = 13;
                 res = 1;    //应答
             }
